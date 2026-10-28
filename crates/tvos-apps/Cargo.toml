@@ -1,0 +1,16 @@
+[package]
+name = "tvos-apps"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["net"]
+# HTTPS client (rustls, static). The Windows simulator builds without it: `ring` needs a C compiler there.
+net = ["dep:ureq"]
+
+[dependencies]
+tvos-core = { path = "../tvos-core" }
+tvos-store = { path = "../tvos-store" }
+serde_json = "1"
+qrcodegen = "1.8"
+ureq = { version = "3", default-features = false, features = ["rustls"], optional = true }

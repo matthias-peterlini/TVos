@@ -1,0 +1,9 @@
+[package]
+name = "tvos-remote-web"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tvos-core = { path = "../tvos-core" }
+tvos-store = { path = "../tvos-store" }
+serde_json = "1"

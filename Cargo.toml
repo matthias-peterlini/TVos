@@ -1,0 +1,21 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/tvos-core",
+    "crates/tvos-apps",
+    "crates/tvos-remote-web",
+    "crates/tvos-cec",
+    "crates/tvos-simulator",
+    "crates/tvos-shell",
+    "crates/tvos-store",
+]
+exclude = [
+    "crates/tvos-baremetal"
+]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

@@ -1,0 +1,14 @@
+#!/bin/sh
+# 1 GB of RAM: compressed swap in memory keeps the system alive when an app (browser) needs more.
+case "$1" in
+  start)
+    modprobe zram 2>/dev/null
+    [ -e /sys/block/zram0/disksize ] || exit 0
+    echo 268435456 > /sys/block/zram0/disksize
+    mkswap /dev/zram0 >/dev/null 2>&1 && swapon -p 100 /dev/zram0
+    ;;
+  stop)
+    swapoff /dev/zram0 2>/dev/null
+    ;;
+esac
+exit 0

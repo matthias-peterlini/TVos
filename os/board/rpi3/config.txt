@@ -1,0 +1,15 @@
+# TVos - Raspberry Pi 3B boot configuration
+start_file=start.elf
+fixup_file=fixup.dat
+kernel=Image
+arm_64bit=1
+
+# Graphics: the kernel's vc4 KMS driver (needed by the browser). 128 MB of contiguous memory for the GPU buffers;
+# the output mode is chosen on the kernel command line (720p: the TV scales it up).
+dtoverlay=vc4-kms-v3d,cma-128
+disable_overscan=1
+disable_splash=1
+gpu_mem=32
+
+# Bluetooth on the mini UART, keeps the full UART free for the debug console
+dtoverlay=miniuart-bt

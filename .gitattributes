@@ -1,0 +1,9 @@
+* text=auto
+# Run on Linux (Buildroot, the device's init): must keep LF line endings
+*.sh text eol=lf
+os/** text eol=lf
+*.patch -text
+*.png binary
+*.jpg binary
+*.ttf binary
+*.bin binary

@@ -1,0 +1,116 @@
+name: Build
+
+# Every push to main builds both images (downloadable from the run's artifacts).
+# A tag v* also publishes them as a GitHub release.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  BR_VERSION: 2026.08.1
+  BR2_DL_DIR: /home/runner/br-dl
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - run: cargo test -p tvos-core -p tvos-apps -p tvos-store -p tvos-cec -p tvos-remote-web
+
+  image:
+    if: github.event_name != 'pull_request'
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: rpi3
+            script: os/build-pi.sh
+          - target: vm
+            script: os/build-vm.sh
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift
+          sudo docker image prune -af >/dev/null
+          df -h /
+
+      - uses: actions/checkout@v5
+
+      - name: Host packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential file wget cpio unzip rsync bc python3 xz-utils
+
+      - name: Buildroot ${{ env.BR_VERSION }}
+        run: |
+          wget -q "https://buildroot.org/downloads/buildroot-$BR_VERSION.tar.xz"
+          tar xf "buildroot-$BR_VERSION.tar.xz" -C "$HOME"
+          rm "buildroot-$BR_VERSION.tar.xz"
+
+      - name: Restore source downloads
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.BR2_DL_DIR }}
+          key: br-dl-${{ matrix.target }}-${{ hashFiles('os/configs/*') }}
+          restore-keys: br-dl-${{ matrix.target }}-
+
+      - name: Build image
+        run: JOBS=$(nproc) BR="$HOME/buildroot-$BR_VERSION" ${{ matrix.script }}
+
+      - name: Save source downloads
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.BR2_DL_DIR }}
+          key: br-dl-${{ matrix.target }}-${{ hashFiles('os/configs/*') }}-${{ github.run_id }}
+
+      - name: Package
+        run: |
+          mkdir dist
+          if [ "${{ matrix.target }}" = rpi3 ]; then
+            xz -T0 -9 -c out/tvos-rpi3.img > dist/tvos-rpi3.img.xz
+          else
+            cp "$HOME/br-out-vm2/images/rootfs.iso9660" dist/tvos-vm-x86_64.iso
+          fi
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tvos-${{ matrix.target }}
+          path: dist/*
+          compression-level: 0
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - run: cd dist && sha256sum * > SHA256SUMS && cat SHA256SUMS
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          body: |
+            ### Download
+            - **tvos-rpi3.img.xz**: Raspberry Pi 3B. Scrivila sulla microSD con Raspberry Pi Imager o balenaEtcher (non serve scompattarla).
+            - **tvos-vm-x86_64.iso**: macchina virtuale (VirtualBox / QEMU), gira tutta in RAM.
+
+            Dopo aver scritto la scheda, apri `tvos.txt` nella partizione `boot` per impostare il Wi-Fi (e, se vuoi, la chiave YouTube).
+            Istruzioni complete nel [README](https://github.com/${{ github.repository }}#readme).

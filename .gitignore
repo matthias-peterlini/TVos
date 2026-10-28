@@ -1,0 +1,15 @@
+# Secrets (Wi-Fi password, YouTube key): never in the repository
+.secrets/
+target/
+out/
+scratch/
+__pycache__/
+
+# Old experiments and disk images in the project root
+/*.iso
+/*.vdi
+/*.raw
+/*.img
+/*.png
+/find_window.py
+/make_iso.py

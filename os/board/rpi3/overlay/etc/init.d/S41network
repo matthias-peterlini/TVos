@@ -1,0 +1,71 @@
+#!/bin/sh
+# Network at boot. Ethernet is used when a cable is plugged in, otherwise Wi-Fi (2.4 GHz only on the Pi 3B).
+# Fixed address: the first address obtained by DHCP is saved and reused as a static address on every
+# later boot, so the phone remote's QR code / URL never changes. If another device took that address
+# meanwhile, it is forgotten and DHCP picks a new one (saved again).
+STATE=/var/lib/tvos/net
+SCRIPT=/usr/share/tvos/udhcpc.script
+
+carrier() {
+    [ "$(cat /sys/class/net/$1/carrier 2>/dev/null)" = 1 ]
+}
+
+static_up() {
+    conf="$STATE/$1.conf"
+    [ -f "$conf" ] || return 1
+    IP= PREFIX= GW= DNS=
+    . "$conf"
+    [ -n "$IP" ] || return 1
+    # Duplicate address detection: a reply means the address is taken
+    if ! arping -q -D -c 2 -w 3 -I "$1" "$IP"; then
+        rm -f "$conf"
+        return 1
+    fi
+    ip addr flush dev "$1"
+    ip addr add "$IP/${PREFIX:-24}" dev "$1"
+    [ -n "$GW" ] && ip route add default via "$GW" dev "$1"
+    : > /etc/resolv.conf
+    for d in $DNS; do echo "nameserver $d" >> /etc/resolv.conf; done
+    echo "static $1 $IP" > /run/tvos-net
+}
+
+net_up() {
+    static_up "$1" && return 0
+    TVOS_NET_STATE="$STATE" udhcpc -i "$1" -s "$SCRIPT" -t 8 -T 3 -n -q >/dev/null 2>&1
+}
+
+wifi_up() {
+    [ -f /etc/wpa_supplicant.conf ] || return 1
+    modprobe brcmfmac 2>/dev/null
+    for i in $(seq 1 30); do
+        [ -d /sys/class/net/wlan0 ] && break
+        sleep 1
+    done
+    wpa_supplicant -B -i wlan0 -D nl80211 -c /etc/wpa_supplicant.conf || return 1
+    # Wait for the association before asking for an address
+    for i in $(seq 1 40); do
+        wpa_cli -i wlan0 status 2>/dev/null | grep -q wpa_state=COMPLETED && break
+        sleep 1
+    done
+    net_up wlan0
+}
+
+case "$1" in
+  start)
+    mkdir -p "$STATE"
+    ip link set lo up
+    (
+        ip link set eth0 up 2>/dev/null
+        sleep 3
+        if carrier eth0; then
+            net_up eth0
+        else
+            wifi_up
+        fi
+    ) &
+    ;;
+  stop)
+    killall udhcpc wpa_supplicant 2>/dev/null
+    ;;
+esac
+exit 0

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>ticly // TV Remote</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      background-color: #07090e;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: hidden;
+      position: relative;
+    }
+    /* Ambient Glows */
+    .orb-amber {
+      position: absolute;
+      top: -100px;
+      left: -80px;
+      width: 260px;
+      height: 260px;
+      background: #f59e0b;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.22;
+      pointer-events: none;
+    }
+    .orb-violet {
+      position: absolute;
+      bottom: -100px;
+      right: -80px;
+      width: 280px;
+      height: 280px;
+      background: #8b5cf6;
+      border-radius: 50%;
+      filter: blur(85px);
+      opacity: 0.18;
+      pointer-events: none;
+    }
+    .remote-card {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(16, 18, 26, 0.85);
+      backdrop-filter: blur(35px);
+      -webkit-backdrop-filter: blur(35px);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 10;
+    }
+    .brand {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      color: #fbbf24;
+      margin-bottom: 24px;
+    }
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #f59e0b;
+      box-shadow: 0 0 8px #f59e0b;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* D-PAD */
+    .dpad-container {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .dpad-btn {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .dpad-btn:active {
+      background: rgba(245, 158, 11, 0.35);
+      border-color: #f59e0b;
+      transform: scale(0.92);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    }
+    .dpad-up {
+      top: 10px;
+      width: 68px;
+      height: 52px;
+      border-radius: 18px 18px 8px 8px;
+    }
+    .dpad-down {
+      bottom: 10px;
+      width: 68px;
+      height: 52px;
+      border-radius: 8px 8px 18px 18px;
+    }
+    .dpad-left {
+      left: 10px;
+      width: 52px;
+      height: 68px;
+      border-radius: 18px 8px 8px 18px;
+    }
+    .dpad-right {
+      right: 10px;
+      width: 52px;
+      height: 68px;
+      border-radius: 8px 18px 18px 8px;
+    }
+    .dpad-center {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.08) 100%);
+      border: 1.5px solid rgba(245, 158, 11, 0.45);
+      color: #fbbf24;
+      font-weight: 700;
+      font-size: 1.05rem;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);
+    }
+    .dpad-center:active {
+      background: #f59e0b;
+      color: #000;
+      transform: scale(0.90);
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.8);
+    }
+
+    /* Action Buttons Grid */
+    .actions-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .action-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 12px 6px;
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.12s ease;
+    }
+    .action-btn:active {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: scale(0.94);
+    }
+    .footer-hint {
+      margin-top: 18px;
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.45);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="orb-amber"></div>
+  <div class="orb-violet"></div>
+
+  <div class="remote-card">
+    <div class="brand">ticly</div>
+    <div class="badge">
+      <span class="badge-dot"></span>
+      <span>TVos RPi 3B Connesso</span>
+    </div>
+
+    <!-- Directional Pad -->
+    <div class="dpad-container">
+      <button class="dpad-btn dpad-up" onclick="sendKey('up')">&#x25B2;</button>
+      <button class="dpad-btn dpad-left" onclick="sendKey('left')">&#x25C0;</button>
+      <button class="dpad-btn dpad-center" onclick="sendKey('select')">OK</button>
+      <button class="dpad-btn dpad-right" onclick="sendKey('right')">&#x25B6;</button>
+      <button class="dpad-btn dpad-down" onclick="sendKey('down')">&#x25BC;</button>
+    </div>
+
+    <!-- Secondary Controls -->
+    <div class="actions-grid">
+      <button class="action-btn" onclick="sendKey('back')">
+        <span>&#x21A9;</span>
+        <span>Indietro</span>
+      </button>
+      <button class="action-btn" onclick="sendKey('home')">
+        <span>&#x2302;</span>
+        <span>Home</span>
+      </button>
+      <button class="action-btn" onclick="sendKey('play')">
+        <span>&#x25B6;&#x275A;&#x275A;</span>
+        <span>Play/Pausa</span>
+      </button>
+      <button class="action-btn" onclick="sendKey('voldown')">
+        <span>&#x1F509;</span>
+        <span>Vol -</span>
+      </button>
+      <button class="action-btn" onclick="sendKey('volup')">
+        <span>&#x1F50A;</span>
+        <span>Vol +</span>
+      </button>
+      <button class="action-btn" onclick="sendKey('mute')">
+        <span>&#x1F507;</span>
+        <span>Muto</span>
+      </button>
+    </div>
+
+    <div class="footer-hint">
+      Tocca i pulsanti per inviare i comandi in tempo reale allo schermo HDMI
+    </div>
+  </div>
+
+  <script>
+    function sendKey(keyName) {
+      if (navigator.vibrate) {
+        navigator.vibrate(20);
+      }
+      fetch('/api/key?key=' + encodeURIComponent(keyName), {
+        method: 'POST'
+      }).catch(err => console.log('Err:', err));
+    }
+  </script>
+<a href="/apps" style="position:fixed;top:12px;right:12px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;font:600 13px system-ui,sans-serif;text-decoration:none;backdrop-filter:blur(10px)">Installa app</a>
+</body>
+</html>

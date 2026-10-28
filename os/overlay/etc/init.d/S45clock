@@ -1,0 +1,9 @@
+#!/bin/sh
+# The Raspberry Pi has no battery clock: HTTPS needs the right date, so set it from NTP once the network is up.
+case "$1" in
+  start)
+    ( until ntpd -n -q -p pool.ntp.org >/dev/null 2>&1; do sleep 5; done ) &
+    ;;
+  stop) ;;
+esac
+exit 0

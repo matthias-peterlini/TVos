@@ -1,0 +1,10 @@
+# TVos - impostazioni
+# Apri questo file dal PC (e' sulla microSD, partizione "boot"), compila e rimetti la scheda nel Raspberry.
+# Al primo avvio TVos le salva nel sistema e cancella qui password e chiave.
+# Wi-Fi solo 2.4 GHz (limite del Raspberry Pi 3B). Con il cavo Ethernet il Wi-Fi non serve.
+
+wifi_ssid=
+wifi_password=
+
+# Chiave YouTube Data API v3 (facoltativa: senza, la Home non mostra i video di tendenza)
+youtube_key=

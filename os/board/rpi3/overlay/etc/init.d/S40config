@@ -1,0 +1,37 @@
+#!/bin/sh
+# Imports the settings written on the boot partition (tvos.txt) before the network starts.
+# The password and the API key are moved into the root filesystem and blanked in tvos.txt,
+# so they do not stay in plain text on a partition every PC can read.
+BOOT=/run/tvos-boot
+CONF=$BOOT/tvos.txt
+
+value() {
+    sed -n "s/^$1=//p" "$CONF" | tr -d '\r' | head -n 1
+}
+
+case "$1" in
+  start)
+    mkdir -p $BOOT
+    mount -t vfat /dev/mmcblk0p1 $BOOT 2>/dev/null || exit 0
+    if [ -f "$CONF" ]; then
+        ssid=$(value wifi_ssid)
+        pass=$(value wifi_password)
+        key=$(value youtube_key)
+        if [ -n "$ssid" ] && [ -n "$pass" ]; then
+            { printf 'ctrl_interface=/var/run/wpa_supplicant\nupdate_config=0\ncountry=IT\n\n'
+              wpa_passphrase "$ssid" "$pass" | grep -v '#psk='; } > /etc/wpa_supplicant.conf
+            chmod 0600 /etc/wpa_supplicant.conf
+            sed -i 's/^wifi_password=.*/wifi_password=/' "$CONF"
+        fi
+        if [ -n "$key" ]; then
+            mkdir -p /etc/tvos
+            printf '%s\n' "$key" > /etc/tvos/youtube.key
+            chmod 0600 /etc/tvos/youtube.key
+            sed -i 's/^youtube_key=.*/youtube_key=/' "$CONF"
+        fi
+        sync
+    fi
+    umount $BOOT
+    ;;
+esac
+exit 0

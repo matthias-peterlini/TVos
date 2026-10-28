@@ -1,0 +1,11 @@
+[package]
+name = "tvos-simulator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tvos-core = { path = "../tvos-core" }
+tvos-apps = { path = "../tvos-apps", default-features = false }
+tvos-remote-web = { path = "../tvos-remote-web" }
+tvos-cec = { path = "../tvos-cec" }
+minifb = "0.27"
