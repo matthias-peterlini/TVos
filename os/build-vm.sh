@@ -23,7 +23,8 @@ export TVOS_SHELL_BIN="$HOME/tvos-target/x86_64-unknown-linux-gnu/release/tvos-s
 export TVOS_YT_KEY_FILE="$ROOT/.secrets/youtube_api_key"
 
 echo "[3/4] building the image"
-make -C "$BR" O="$OUT" -j"$JOBS"
+# BR2_JLEVEL also caps the jobs inside each package (WebKit's ninja would otherwise use every core)
+make -C "$BR" O="$OUT" -j"$JOBS" BR2_JLEVEL="$JOBS"
 
 echo "[4/4] done"
 ls -la "$OUT/images/"

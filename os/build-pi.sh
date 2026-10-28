@@ -23,7 +23,8 @@ export TVOS_YT_KEY_FILE="$ROOT/.secrets/youtube_api_key"
 export TVOS_WIFI_FILE="$ROOT/.secrets/wifi.conf"
 
 echo "[3/4] building the image"
-make -C "$BR" O="$OUT" -j"${JOBS:-4}"
+# BR2_JLEVEL also caps the jobs inside each package (WebKit's ninja would otherwise use every core: ~1.5 GB each)
+make -C "$BR" O="$OUT" -j"${JOBS:-4}" BR2_JLEVEL="${JOBS:-4}"
 
 echo "[4/4] done"
 mkdir -p "$ROOT/out"
