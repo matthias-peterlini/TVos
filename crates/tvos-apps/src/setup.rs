@@ -34,9 +34,9 @@ impl SetupScreen {
 
         // Left: greeting and the three things that must work
         let x = (w as f32 * 0.075) as i32;
-        s.draw_text_shadow(x, (h as f32 * 0.12) as i32, "Configurazione iniziale", Color::rgba(255, 255, 255, 200), 22.0 * k, Weight::SemiBold);
-        s.draw_text_shadow(x, (h as f32 * 0.165) as i32, "Benvenuto", Color::white(), 78.0 * k, Weight::Display);
-        s.draw_text_shadow(x, (h as f32 * 0.33) as i32, "Collega il telefono e la TV è pronta.", Color::rgba(255, 255, 255, 220), 24.0 * k, Weight::Regular);
+        s.draw_text_ex(x, (h as f32 * 0.12) as i32, "Configurazione iniziale", Color::rgba(255, 255, 255, 200), 22.0 * k, Weight::SemiBold);
+        s.draw_text_ex(x, (h as f32 * 0.165) as i32, "Benvenuto", Color::white(), 78.0 * k, Weight::Display);
+        s.draw_text_ex(x, (h as f32 * 0.33) as i32, "Collega il telefono e la TV è pronta.", Color::rgba(255, 255, 255, 220), 24.0 * k, Weight::Regular);
 
         let sys = &self.sys;
         let (net_title, net_detail) = sys.network_summary();
@@ -83,7 +83,7 @@ impl SetupScreen {
         let (cy, ch) = ((h as f32 * 0.14) as i32, (h as f32 * 0.74) as i32);
         s.draw_frosted_card(cx, cy, cw as u32, ch as u32, px(30.0), Color::rgba(30, 30, 40, 70), Color::rgba(255, 255, 255, 90));
         let pad = px(30.0);
-        s.draw_text_shadow(cx + pad, cy + pad, "Telecomando", Color::white(), 28.0 * k, Weight::Display);
+        s.draw_text_ex(cx + pad, cy + pad, "Telecomando", Color::white(), 28.0 * k, Weight::Display);
         let qs = (cw - 2 * pad).min(ch - px(190.0));
         let (qx, qy) = (cx + (cw - qs) / 2, cy + px(82.0));
         match self.remote_url() {
@@ -94,7 +94,7 @@ impl SetupScreen {
                 s.draw_text_ex(cx + (cw - uw) / 2, qy + qs + px(18.0), &url, Color::white(), us, Weight::SemiBold);
             }
             None => {
-                s.fill_rrect(qx, qy, qs as u32, qs as u32, qs / 14, Color::rgba(255, 255, 255, 30));
+                s.fill_rrect(qx, qy, qs as u32, qs as u32, qs / 28, Color::rgba(255, 255, 255, 30));
                 let msg = "In attesa della rete";
                 let ms = 19.0 * k;
                 s.draw_text_ex(qx + (qs - text_width(msg, ms, Weight::SemiBold)) / 2, qy + qs / 2 - px(12.0), msg, Color::white(), ms, Weight::SemiBold);

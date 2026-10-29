@@ -235,13 +235,6 @@ impl Surface {
         }
     }
 
-    /// Text with a soft dark shadow, readable over a bright photo
-    pub fn draw_text_shadow(&mut self, x: i32, y: i32, text: &str, color: Color, size: f32, weight: Weight) {
-        self.draw_text_ex(x + 2, y + 3, text, Color::rgba(0, 0, 0, 90), size, weight);
-        self.draw_text_ex(x + 1, y + 1, text, Color::rgba(0, 0, 0, 70), size, weight);
-        self.draw_text_ex(x, y, text, color, size, weight);
-    }
-
     /// Anti-aliased rounded rectangle outline (inside the rect), `bw` px thick
     pub fn stroke_rrect(&mut self, x: i32, y: i32, w: u32, h: u32, radius: i32, bw: f32, color: Color) {
         let r = (radius as f32).min(w as f32 / 2.0).min(h as f32 / 2.0);

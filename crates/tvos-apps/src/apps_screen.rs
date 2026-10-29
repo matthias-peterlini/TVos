@@ -28,8 +28,8 @@ impl AppsScreen {
         s.fill_rect(0, 0, w as u32, h as u32, Color::rgba(0, 0, 0, 60));
 
         let x = (w as f32 * 0.075) as i32;
-        s.draw_text_shadow(x, (h as f32 * 0.11) as i32, "Installa app", Color::white(), 60.0 * k, Weight::Display);
-        s.draw_text_shadow(x, (h as f32 * 0.235) as i32, "Dal telefono, collegato alla stessa rete della TV.", Color::rgba(255, 255, 255, 220), 22.0 * k, Weight::Regular);
+        s.draw_text_ex(x, (h as f32 * 0.11) as i32, "Installa app", Color::white(), 60.0 * k, Weight::Display);
+        s.draw_text_ex(x, (h as f32 * 0.235) as i32, "Dal telefono, collegato alla stessa rete della TV.", Color::rgba(255, 255, 255, 220), 22.0 * k, Weight::Regular);
 
         let has_ip = !self.ip.is_empty() && self.ip != "0.0.0.0";
         let url = format!("http://{}:{}/apps", self.ip, self.port);
@@ -53,14 +53,14 @@ impl AppsScreen {
 
         // PIN
         let py = y0 + rh * 3 + px(40.0);
-        s.draw_text_shadow(x, py, "PIN", Color::rgba(255, 255, 255, 200), 18.0 * k, Weight::SemiBold);
+        s.draw_text_ex(x, py, "PIN", Color::rgba(255, 255, 255, 200), 18.0 * k, Weight::SemiBold);
         let pin = if self.pin.is_empty() { "----" } else { &self.pin };
-        s.draw_text_shadow(x, py + px(26.0), pin, Color::white(), 52.0 * k, Weight::Display);
+        s.draw_text_ex(x, py + px(26.0), pin, Color::white(), 52.0 * k, Weight::Display);
 
         // Installed apps as chips
         let iy = py + px(110.0);
         let label = if self.installed.is_empty() { "Nessuna app installata".to_string() } else { format!("Installate ({})", self.installed.len()) };
-        s.draw_text_shadow(x, iy, &label, Color::rgba(255, 255, 255, 200), 16.0 * k, Weight::SemiBold);
+        s.draw_text_ex(x, iy, &label, Color::rgba(255, 255, 255, 200), 16.0 * k, Weight::SemiBold);
         let (mut cx, mut cy) = (x, iy + px(30.0));
         let cs = 15.0 * k;
         for name in &self.installed {

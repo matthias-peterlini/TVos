@@ -88,10 +88,10 @@ impl SourcesScreen {
             let dc = if row.on { Color::rgb(52, 211, 120) } else { Color::rgba(255, 255, 255, 110) };
             s.fill_rrect(x + px(34.0), y + row_h / 2 - dot / 2, dot as u32, dot as u32, dot / 2, dc);
             let tx = x + px(34.0) + dot + px(22.0);
-            s.draw_text_shadow(tx, y + row_h / 2 - (tsize * 0.95) as i32, row.title, Color::white(), tsize, Weight::SemiBold);
+            s.draw_text_ex(tx, y + row_h / 2 - (tsize * 0.95) as i32, row.title, Color::white(), tsize, Weight::SemiBold);
             s.draw_text_ex(tx, y + row_h / 2 + px(6.0), &row.detail, Color::rgba(255, 255, 255, 215), dsize, Weight::Regular);
             let sw = text_width(row.status, ssize, Weight::SemiBold);
-            s.draw_text_shadow(x + pw - px(34.0) - sw, y + row_h / 2 - (ssize * 0.65) as i32, row.status, if row.on { Color::white() } else { Color::rgba(255, 255, 255, 170) }, ssize, Weight::SemiBold);
+            s.draw_text_ex(x + pw - px(34.0) - sw, y + row_h / 2 - (ssize * 0.65) as i32, row.status, if row.on { Color::white() } else { Color::rgba(255, 255, 255, 170) }, ssize, Weight::SemiBold);
         }
     }
 }

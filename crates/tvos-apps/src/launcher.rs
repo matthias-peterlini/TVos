@@ -314,10 +314,10 @@ impl Launcher {
         let time = clock::now_text();
         let probe = text_width(&time, 100.0, Weight::Display).max(1) as f32;
         let size = (100.0 * w as f32 * 0.36 / probe).min(150.0 * s);
-        surface.draw_text_shadow((w - text_width(&time, size, Weight::Display)) / 2, (h as f32 * 0.16) as i32 + dy, &time, white, size, Weight::Display);
+        surface.draw_text_ex((w - text_width(&time, size, Weight::Display)) / 2, (h as f32 * 0.16) as i32 + dy, &time, white, size, Weight::Display);
         let greet = format!("Ciao, {}", self.name);
         let gsize = 46.0 * s;
-        surface.draw_text_shadow((w - text_width(&greet, gsize, Weight::Display)) / 2, (h as f32 * 0.465) as i32 + dy, &greet, white, gsize, Weight::Display);
+        surface.draw_text_ex((w - text_width(&greet, gsize, Weight::Display)) / 2, (h as f32 * 0.465) as i32 + dy, &greet, white, gsize, Weight::Display);
 
         // Dock
         let dock = self.dock();
@@ -339,7 +339,8 @@ impl Launcher {
         let bar_h = tile_h + 2 * pad + label;
         let bar_x = (w - bar_w) / 2;
         let bar_y = (h as f32 * 0.91) as i32 - bar_h + dy;
-        surface.draw_frosted_card(bar_x, bar_y, bar_w as u32, bar_h as u32, tile_w / 6, Color::rgba(255, 255, 255, 38), Color::rgba(255, 255, 255, 80));
+        // Bar corners concentric with the tiles': tile radius + padding
+        surface.draw_frosted_card(bar_x, bar_y, bar_w as u32, bar_h as u32, tile_h * 16 / 100 + pad, Color::rgba(255, 255, 255, 38), Color::rgba(255, 255, 255, 80));
 
         let mut focused: Option<(usize, i32)> = None;
         for slot in 0..visible {
@@ -358,17 +359,17 @@ impl Launcher {
             let (fx, fy, fw, fh) = (x - grow, bar_y + pad - grow, tile_w + 2 * grow, tile_h + 2 * grow);
             surface.draw_radial_glow(fx + fw / 2, fy + fh + px(6.0), fw * 3 / 5, Color::rgba(0, 0, 0, 120));
             draw_tile(surface, &app.art, &app.name, fx, fy, fw, fh);
-            surface.stroke_rrect(fx - 2, fy - 2, (fw + 4) as u32, (fh + 4) as u32, tile_h * 16 / 100 + 2, 3.0, Color::rgba(255, 255, 255, 235));
+            surface.stroke_rrect(fx - 2, fy - 2, (fw + 4) as u32, (fh + 4) as u32, fh * 16 / 100 + 2, 3.0, Color::rgba(255, 255, 255, 235));
             let nsize = 22.0 * s;
-            surface.draw_text_shadow(fx + (fw - text_width(&app.name, nsize, Weight::SemiBold)) / 2, fy + fh + px(6.0), &app.name, white, nsize, Weight::SemiBold);
+            surface.draw_text_ex(fx + (fw - text_width(&app.name, nsize, Weight::SemiBold)) / 2, fy + fh + px(6.0), &app.name, white, nsize, Weight::SemiBold);
         }
         // More apps off screen: small arrows at the dock edges
         let arrow = 26.0 * s;
         if self.scroll > 0 {
-            surface.draw_text_shadow(bar_x - px(28.0), bar_y + pad + tile_h / 2 - px(18.0), "‹", white, arrow * 1.6, Weight::SemiBold);
+            surface.draw_text_ex(bar_x - px(28.0), bar_y + pad + tile_h / 2 - px(18.0), "‹", white, arrow * 1.6, Weight::SemiBold);
         }
         if self.scroll + visible < count {
-            surface.draw_text_shadow(bar_x + bar_w + px(12.0), bar_y + pad + tile_h / 2 - px(18.0), "›", white, arrow * 1.6, Weight::SemiBold);
+            surface.draw_text_ex(bar_x + bar_w + px(12.0), bar_y + pad + tile_h / 2 - px(18.0), "›", white, arrow * 1.6, Weight::SemiBold);
         }
     }
 
@@ -398,10 +399,10 @@ impl Launcher {
         }
         let time = clock::now_text();
         let csize = 40.0 * s;
-        surface.draw_text_shadow(px(48.0), hb_y + hb_h / 2 - (csize * 0.68) as i32, &time, white, csize, Weight::Display);
+        surface.draw_text_ex(px(48.0), hb_y + hb_h / 2 - (csize * 0.68) as i32, &time, white, csize, Weight::Display);
         let nsize = 24.0 * s;
         let nw = text_width(&self.name, nsize, Weight::Display);
-        surface.draw_text_shadow(w - px(48.0) - nw, hb_y + hb_h / 2 - (nsize * 0.68) as i32, &self.name, white, nsize, Weight::Display);
+        surface.draw_text_ex(w - px(48.0) - nw, hb_y + hb_h / 2 - (nsize * 0.68) as i32, &self.name, white, nsize, Weight::Display);
 
         // Grid
         let tile_w = (w as f32 * 0.205) as i32;
@@ -430,9 +431,9 @@ impl Launcher {
             let (fx, fy, fw, fh) = (x - grow, y - grow, tile_w + 2 * grow, tile_h + 2 * grow);
             surface.draw_radial_glow(fx + fw / 2, fy + fh + px(6.0), fw * 3 / 5, Color::rgba(0, 0, 0, 110));
             draw_tile(surface, &app.art, &app.name, fx, fy, fw, fh);
-            surface.stroke_rrect(fx - 2, fy - 2, (fw + 4) as u32, (fh + 4) as u32, tile_h * 16 / 100 + 2, 3.0, Color::rgba(255, 255, 255, 235));
+            surface.stroke_rrect(fx - 2, fy - 2, (fw + 4) as u32, (fh + 4) as u32, fh * 16 / 100 + 2, 3.0, Color::rgba(255, 255, 255, 235));
             let nsize = 22.0 * s;
-            surface.draw_text_shadow(fx + (fw - text_width(&app.name, nsize, Weight::SemiBold)) / 2, fy + fh + px(12.0), &app.name, white, nsize, Weight::SemiBold);
+            surface.draw_text_ex(fx + (fw - text_width(&app.name, nsize, Weight::SemiBold)) / 2, fy + fh + px(12.0), &app.name, white, nsize, Weight::SemiBold);
         }
 
         // Page dots

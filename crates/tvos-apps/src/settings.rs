@@ -130,7 +130,7 @@ impl SettingsApp {
             let y = top + ipad + i as i32 * (item_h + px(8.0));
             let on = i == self.menu;
             if on {
-                s.fill_rrect(mx + ipad, y, (mw - 2 * ipad) as u32, item_h as u32, px(14.0), Color::rgba(255, 255, 255, 225));
+                s.fill_rrect(mx + ipad, y, (mw - 2 * ipad) as u32, item_h as u32, px(26.0) - ipad, Color::rgba(255, 255, 255, 225));
             }
             let col = if on { Color::rgb(25, 25, 32) } else { Color::white() };
             s.draw_text_ex(mx + ipad + px(18.0), y + (item_h as f32 * 0.5 - msize * 0.68) as i32, name, col, msize, Weight::SemiBold);
@@ -138,7 +138,7 @@ impl SettingsApp {
 
         // Panel
         s.draw_frosted_card(rx, top, rw as u32, ph as u32, px(26.0), Color::rgba(30, 30, 40, 60), Color::rgba(255, 255, 255, 80));
-        s.draw_text_shadow(rx + px(40.0), top + px(30.0), MENU[self.menu], Color::white(), 34.0 * k, Weight::Display);
+        s.draw_text_ex(rx + px(40.0), top + px(30.0), MENU[self.menu], Color::white(), 34.0 * k, Weight::Display);
         // The remote page also shows its QR code on the right of the panel
         let mut rows_w = rw - px(80.0);
         if MENU[self.menu] == "Telecomando" && self.sys.ip.is_some() {

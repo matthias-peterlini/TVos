@@ -6,7 +6,7 @@ use tvos_core::surface::Surface;
 
 /// Draws `text` as a QR code on a white rounded card `size` pixels wide, top-left at (x, y).
 pub fn draw(s: &mut Surface, x: i32, y: i32, size: i32, text: &str) {
-    s.fill_rrect(x, y, size as u32, size as u32, size / 14, Color::white());
+    s.fill_rrect(x, y, size as u32, size as u32, size / 28, Color::white());
     let Ok(qr) = QrCode::encode_text(text, QrCodeEcc::Medium) else { return };
     let n = qr.size();
     // Whole pixels per module keep the code sharp; at least 2 modules of white border
