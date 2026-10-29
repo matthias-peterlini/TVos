@@ -24,7 +24,8 @@ Add-Type -Namespace TVos -Name Raw -MemberDefinition @'
 [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
 public static extern Microsoft.Win32.SafeHandles.SafeFileHandle CreateFile(string name, uint access, uint share, IntPtr sec, uint disposition, uint flags, IntPtr template);
 '@
-$h = [TVos.Raw]::CreateFile("\\.\PhysicalDrive$DiskNumber", 0xC0000000, 3, [IntPtr]::Zero, 3, 0, [IntPtr]::Zero)
+# GENERIC_READ|GENERIC_WRITE as a decimal: PowerShell 5.1 reads 0xC0000000 as a negative Int32
+$h = [TVos.Raw]::CreateFile("\\.\PhysicalDrive$DiskNumber", [uint32]3221225472, 3, [IntPtr]::Zero, 3, 0, [IntPtr]::Zero)
 if ($h.IsInvalid) { throw "Cannot open the card (run PowerShell as administrator)." }
 $out = New-Object IO.FileStream($h, [IO.FileAccess]::ReadWrite)
 $in = [IO.File]::OpenRead($img.FullName)
