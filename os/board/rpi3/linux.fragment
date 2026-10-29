@@ -7,3 +7,6 @@ CONFIG_DRM=y
 CONFIG_DRM_VC4=y
 CONFIG_DRM_FBDEV_EMULATION=y
 CONFIG_TMPFS=y
+# Plain .ko modules: busybox modprobe and udev's libkmod are built without xz support
+# CONFIG_MODULE_COMPRESS is not set
+CONFIG_MODULE_COMPRESS_NONE=y

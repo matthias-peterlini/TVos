@@ -3,8 +3,15 @@
 # Fixed address: the first address obtained by DHCP is saved and reused as a static address on every
 # later boot, so the phone remote's QR code / URL never changes. If another device took that address
 # meanwhile, it is forgotten and DHCP picks a new one (saved again).
+# Until an address is up it retries every 20 s. Each boot's attempts are logged to $LOG (on the card,
+# readable from a PC) so a failed connection can be diagnosed.
 STATE=/var/lib/tvos/net
 SCRIPT=/usr/share/tvos/udhcpc.script
+LOG=/var/lib/tvos/net.log
+
+log() {
+    echo "$(cat /proc/uptime | cut -d' ' -f1)s $*" >> "$LOG"
+}
 
 carrier() {
     [ "$(cat /sys/class/net/$1/carrier 2>/dev/null)" = 1 ]
@@ -18,6 +25,7 @@ static_up() {
     [ -n "$IP" ] || return 1
     # Duplicate address detection: a reply means the address is taken
     if ! arping -q -D -c 2 -w 3 -I "$1" "$IP"; then
+        log "$1: saved address $IP is taken, back to DHCP"
         rm -f "$conf"
         return 1
     fi
@@ -27,41 +35,67 @@ static_up() {
     : > /etc/resolv.conf
     for d in $DNS; do echo "nameserver $d" >> /etc/resolv.conf; done
     echo "static $1 $IP" > /run/tvos-net
+    log "$1: static $IP gw $GW"
 }
 
 net_up() {
     static_up "$1" && return 0
-    TVOS_NET_STATE="$STATE" udhcpc -i "$1" -s "$SCRIPT" -t 8 -T 3 -n -q >/dev/null 2>&1
+    if TVOS_NET_STATE="$STATE" udhcpc -i "$1" -s "$SCRIPT" -t 8 -T 3 -n -q >> "$LOG" 2>&1; then
+        log "$1: DHCP ok: $(cat /run/tvos-net 2>/dev/null)"
+        return 0
+    fi
+    log "$1: DHCP failed"
+    return 1
 }
 
 wifi_up() {
-    [ -f /etc/wpa_supplicant.conf ] || return 1
-    modprobe brcmfmac 2>/dev/null
-    for i in $(seq 1 30); do
-        [ -d /sys/class/net/wlan0 ] && break
-        sleep 1
-    done
-    wpa_supplicant -B -i wlan0 -D nl80211 -c /etc/wpa_supplicant.conf || return 1
+    [ -f /etc/wpa_supplicant.conf ] || { log "wifi: no /etc/wpa_supplicant.conf (tvos.txt empty?)"; return 1; }
+    if [ ! -d /sys/class/net/wlan0 ]; then
+        modprobe brcmfmac >> "$LOG" 2>&1 || log "wifi: modprobe brcmfmac failed"
+        for i in $(seq 1 30); do
+            [ -d /sys/class/net/wlan0 ] && break
+            sleep 1
+        done
+    fi
+    if [ ! -d /sys/class/net/wlan0 ]; then
+        log "wifi: no wlan0. Kernel messages:"
+        dmesg | grep -iE 'brcm|firmware|mmc1|sdio' | tail -n 20 >> "$LOG"
+        return 1
+    fi
+    ip link set wlan0 up
+    pidof wpa_supplicant >/dev/null || wpa_supplicant -B -i wlan0 -D nl80211 -c /etc/wpa_supplicant.conf >> "$LOG" 2>&1 \
+        || { log "wifi: wpa_supplicant did not start"; return 1; }
     # Wait for the association before asking for an address
     for i in $(seq 1 40); do
         wpa_cli -i wlan0 status 2>/dev/null | grep -q wpa_state=COMPLETED && break
         sleep 1
     done
+    st=$(wpa_cli -i wlan0 status 2>/dev/null | grep -E '^(wpa_state|freq|key_mgmt)=' | tr '\n' ' ')
+    log "wifi: $st"
+    case "$st" in
+      *COMPLETED*) ;;
+      *) log "wifi: not associated. Visible networks (2.4 GHz only):"
+         wpa_cli -i wlan0 scan_results 2>/dev/null | tail -n +2 | cut -f2,3,5 | head -n 15 >> "$LOG"
+         return 1 ;;
+    esac
     net_up wlan0
 }
 
 case "$1" in
   start)
     mkdir -p "$STATE"
+    # Keep the last boots only
+    [ -f "$LOG" ] && tail -n 200 "$LOG" > "$LOG.old" && mv "$LOG.old" "$LOG"
+    echo "=== boot" >> "$LOG"
     ip link set lo up
     (
         ip link set eth0 up 2>/dev/null
         sleep 3
-        if carrier eth0; then
-            net_up eth0
-        else
-            wifi_up
-        fi
+        until { carrier eth0 && net_up eth0; } || wifi_up; do
+            log "no network yet, retrying in 20 s"
+            sleep 20
+            ip link set eth0 up 2>/dev/null
+        done
     ) &
     ;;
   stop)
